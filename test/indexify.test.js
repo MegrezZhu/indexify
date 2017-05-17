@@ -1,9 +1,8 @@
 const indexify = require('../index.js');
 const assert = require('assert');
-const _ = require('lodash');
 
 function checkProp (obj, keys) {
-  _.forEachRight(keys, key => {
+  keys.forEach(key => {
     assert(obj[key], `missing prop ${key}`);
     delete obj[key];
   });

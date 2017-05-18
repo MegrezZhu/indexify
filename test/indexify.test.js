@@ -20,12 +20,12 @@ function checkProp (obj, keys) {
 }
 
 describe('indexify', () => {
-  it('#1 default', () => {
+  it('default', () => {
     const res = indexify();
     checkProp(res, ['mod1']);
   });
 
-  it('#2 include', () => {
+  it('include', () => {
     const res = indexify({
       base: '..',
       include: ['index', 'indexify']
@@ -33,14 +33,22 @@ describe('indexify', () => {
     checkProp(res, ['index', 'indexify']);
   });
 
-  it('#3 base specified', () => {
+  it('exclude', () => {
+    const res = indexify({
+      exclude: ['mod/a'],
+      recursive: true
+    });
+    checkProp(res, ['mod1', 'mod.b']);
+  });
+
+  it('base specified', () => {
     const res = indexify({
       base: './mod'
     });
     checkProp(res, ['a', 'b']);
   });
 
-  it('#4 recursive', () => {
+  it('recursive', () => {
     const res = indexify({
       recursive: true
     });
@@ -51,7 +59,7 @@ describe('indexify', () => {
     ]);
   });
 
-  it('#5 merge', () => {
+  it('merge', () => {
     const res = indexify({
       recursive: true,
       merge: true

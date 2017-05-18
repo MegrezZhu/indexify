@@ -11,7 +11,10 @@
     "url": "https://github.com/MegrezZhu/indexify"
   },
   "keywords": [
-    "require"
+    "require",
+    "index",
+    "recursive",
+    "module"
   ],
   "author": "Megrez Zhu",
   "license": "ISC",

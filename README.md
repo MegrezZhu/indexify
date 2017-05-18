@@ -1,5 +1,6 @@
-[![Known Vulnerabilities](https://snyk.io/test/npm/require-indexify/badge.svg)](https://snyk.io/test/npm/require-indexify)
 [![npm version](https://badge.fury.io/js/require-indexify.svg)](https://github.com/MegrezZhu/indexify)
+[![Build Status](https://travis-ci.org/MegrezZhu/indexify.svg?branch=master)](https://travis-ci.org/MegrezZhu/indexify)
+[![Known Vulnerabilities](https://snyk.io/test/npm/require-indexify/badge.svg)](https://snyk.io/test/npm/require-indexify)
 
 
 ## Description

@@ -6,7 +6,10 @@
   "scripts": {
     "test": "mocha test/*.js"
   },
-  "git repository": "https://github.com/MegrezZhu/indexify",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MegrezZhu/indexify"
+  },
   "keywords": [
     "require"
   ],

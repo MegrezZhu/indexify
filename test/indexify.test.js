@@ -1,11 +1,17 @@
 const indexify = require('../index.js');
 const assert = require('assert');
-const lodash = require('lodash');
+const _ = require('lodash');
 
 function checkProp (obj, keys) {
   keys.forEach(key => {
-    assert(obj[key], `missing prop ${key}`);
-    delete obj[key];
+    assert(_.hasIn(obj, key), `missing prop ${key}`);
+    _.unset(obj, key);
+    const res = key.match(/(.+)\..+$/);
+    if (res) {
+      if (Object.keys(_.get(obj, res[1])).length === 0) {
+        _.unset(obj, res[1]);
+      }
+    }
   });
 
   for (const key of Object.keys(obj)) {
@@ -38,6 +44,10 @@ describe('indexify', () => {
     const res = indexify({
       recursive: true
     });
-    // TO-DO
+    checkProp(res, [
+      'mod.a',
+      'mod.b',
+      'mod1'
+    ]);
   });
 });

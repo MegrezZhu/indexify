@@ -1,56 +1,94 @@
 const path = require('path');
-const fs = require('fs');
 const stack = require('callsite');
+const fs = require('fs');
 
-module.exports = config => {
+function indexify (config) {
   const callerPath = path.resolve(stack()[2].getFileName());
   const source = path.resolve(callerPath, '..', config.base);
-  let files = fs.readdirSync(source).map(filename => filename.replace(/\.js$/, ''));
-  config.exclude = config.exclude.map(filename => filename.replace(/\.js$/, ''));
-
-  const nameMap = new Map();
+  config.source = source;
+  config.callerPath = callerPath;
   if (config.include) {
-    config.include.forEach(setting => {
-      if (setting instanceof Array) {
-        nameMap.set(setting[0].replace(/\.js$/, ''), setting[1]);
-      } else {
-        nameMap.set(setting.replace(/\.js$/, ''), setting);
-      }
-    });
-  } else {
-    files.forEach(filename => {
-      nameMap.set(filename, filename);
-    });
+    config.includeSet = new Set(config.include.map(normalizePath.bind(null, source)));
   }
-
+  config.excludeSet = new Set(config.exclude.map(normalizePath.bind(null, source)));
   if (config.selfExclude) {
-    config.exclude.push(path.basename(callerPath, '.js'));
+    config.excludeSet.add(callerPath);
   }
-  config.exclude.forEach(filename => {
-    nameMap.delete(filename);
-  });
 
+  const res = analyze(source, config);
+  if (!config.merge) {
+    return res;
+  } else {
+    const _res = {};
+    for (const value of Object.values(res)) {
+      Object.assign(_res, value);
+    }
+    return _res;
+  }
+}
+
+function normalizePath (source, filepath) {
+  const resolved = path.resolve(source, filepath);
+  if (!resolved.match(/\..+$'/)) {
+    return resolved + '.js';
+  } else {
+    return resolved;
+  }
+}
+
+function analyze (source, config) {
+  const res = {};
+  let files = fs.readdirSync(source);
   files
-    .filter(filename => config.directory || !fs.lstatSync(path.join(source, filename)).isDirectory())   // exclude
-    .forEach(filename => {
-      const name = nameMap.get(filename);
-      if (name) {
-        try {
-          // ok.
-          result[name] = require(path.join(source, filename));
-        } catch (err) {
-          // maybe there isn't a index.js
+    .map(filepath => path.join(source, filepath))
+    .forEach(filepath => {
+      const checkRes = canRequire(filepath);
+      if (checkRes.canRequire) {
+        if ((!config.includeSet || config.includeSet.has(filepath)) && !config.excludeSet.has(filepath)) {
+          res[path.basename(filepath).replace(/\.(?:js|json)$/, '')] = require(filepath);
+        }
+      } else {
+        if (!checkRes.isFile && config.recursive) {
+          res[path.basename(filepath)] = analyze(filepath, config);
         }
       }
     });
 
-  if (config.merge) {
-    const merged = {};
-    for (const value of Object.values(result)) {
-      Object.assign(merged, value);
-    }
-    return merged;
+  return res;
+}
+
+function canRequire (filepath) {
+  const basename = path.basename(filepath);
+  if (basename.match(/\.(?:js|json)$/)) {
+    return {
+      isFile: true,
+      canRequire: true
+    };
   } else {
-    return result;
+    const stat = fs.statSync(filepath);
+    if (stat.isDirectory()) {
+      try {
+        const stat = fs.statSync(path.join(filepath, 'index.js'));
+        if (stat.isFile()) {
+          return {
+            isFile: true,
+            canRequire: true
+          };
+        }
+      } catch (err) {
+        // no such file: index.js
+        return {
+          isFile: false,
+          canRequire: false
+        };
+      }
+    } else {
+      return {
+        isFile: true,
+        canRequire: false
+      };
+    }
   }
-};
+}
+
+module.exports = indexify;

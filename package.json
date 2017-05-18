@@ -1,6 +1,6 @@
 {
   "name": "require-indexify",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "automatically require modules in a directory",
   "main": "index.js",
   "scripts": {

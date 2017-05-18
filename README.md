@@ -1,3 +1,7 @@
+[![Known Vulnerabilities](https://snyk.io/test/npm/require-indexify/badge.svg)](https://snyk.io/test/npm/require-indexify)
+[![npm version](https://badge.fury.io/js/require-indexify.svg)](https://github.com/MegrezZhu/indexify)
+
+
 ## Description
 A tool to automatically require modules in a directory.
 

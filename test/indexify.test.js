@@ -1,5 +1,6 @@
 const indexify = require('../index.js');
 const assert = require('assert');
+const lodash = require('lodash');
 
 function checkProp (obj, keys) {
   keys.forEach(key => {
@@ -15,7 +16,7 @@ function checkProp (obj, keys) {
 describe('indexify', () => {
   it('#1', () => {
     const res = indexify();
-    checkProp(res, []);
+    checkProp(res, ['mod1']);
   });
 
   it('#2', () => {
@@ -31,5 +32,12 @@ describe('indexify', () => {
       base: './mod'
     });
     checkProp(res, ['a', 'b']);
+  });
+
+  it('#4', () => {
+    const res = indexify({
+      recursive: true
+    });
+    // TO-DO
   });
 });

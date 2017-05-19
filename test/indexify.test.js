@@ -3,8 +3,8 @@ const assert = require('assert');
 const _ = require('lodash');
 const path = require('path');
 
-function checkProp (obj, keys) {
-  console.log(obj);
+function checkProp (_obj, keys) {
+  const obj = _.cloneDeep(_obj);
   keys.forEach(key => {
     assert(_.hasIn(obj, key), `missing prop ${key}`);
     _.unset(obj, key);
@@ -23,10 +23,11 @@ function checkProp (obj, keys) {
 
 describe('indexify', () => {
   it('default', () => {
-    const res = indexify({
-      exclude: ['mod', 'app']
-    });
-    checkProp(res, ['mod1']);
+    const res = indexify();
+    checkProp(res, [
+      'app',
+      'mod1',
+    ]);
   });
 
   it('include', () => {

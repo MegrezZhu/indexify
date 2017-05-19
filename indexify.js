@@ -13,7 +13,10 @@ function indexify (config) {
   config.tree = {};
   if (config.include) {
     config.include.forEach(pattern => {
-      assert(pattern.indexOf('/'), 'only the includ/exclude of 1st-level subdiretory/file is supported.');
+      assert(pattern.indexOf('/'), 'only the include/exclude of 1st-level subdiretory/file is supported.');
+      // if (config.recursive && !pattern.match(/\.(?:js|json)$/)) {
+      //   pattern += '/**/*.+(json|js)';
+      // }
       if (!pattern.match(/\.(?:js|json)$/)) {
         pattern += '/**/*.+(json|js)';
       }
@@ -29,8 +32,9 @@ function indexify (config) {
       });
   }
   if (config.exclude) {
+    // TO-DO 指定排除a/b/c.js
     config.exclude.forEach(pattern => {
-      assert(pattern.indexOf('/'), 'only the includ/exclude of 1st-level subdiretory/file is supported.');
+      assert(pattern.indexOf('/'), 'only the include/exclude of 1st-level subdiretory/file is supported.');
       _.unset(config.tree, pattern);
     });
   }
@@ -61,7 +65,7 @@ function analyze (source, tree, config) {
       if (value['index.js'] === 1) {
         const _path = path.resolve(source, key, 'index.js');
         if (config.selfExclude && _path === config.callerPath) continue;
-        res[key] = require(path.resolve(_path));
+        res[key] = require(_path);
       } else {
         if (config.recursive) {
           res[key] = analyze(path.resolve(source, key), value, config);

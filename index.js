@@ -4,7 +4,7 @@ const indexify = require('./indexify');
 const baseConfig = {
   base: '.',
   include: null,
-  exclude: [],
+  exclude: null,
   // priority: [],             // loading order, first to be loaded first
   selfExclude: true,           // caller file is excluded by default
   // recursive: false,         // scan recursively

@@ -1,8 +1,10 @@
 const indexify = require('../index.js');
 const assert = require('assert');
 const _ = require('lodash');
+const path = require('path');
 
 function checkProp (obj, keys) {
+  console.log(obj);
   keys.forEach(key => {
     assert(_.hasIn(obj, key), `missing prop ${key}`);
     _.unset(obj, key);
@@ -21,24 +23,26 @@ function checkProp (obj, keys) {
 
 describe('indexify', () => {
   it('default', () => {
-    const res = indexify();
+    const res = indexify({
+      exclude: ['mod', 'app']
+    });
     checkProp(res, ['mod1']);
   });
 
   it('include', () => {
     const res = indexify({
       base: '..',
-      include: ['index', 'indexify']
+      include: ['index.js', 'indexify.js']
     });
     checkProp(res, ['index', 'indexify']);
   });
 
   it('exclude', () => {
     const res = indexify({
-      exclude: ['mod/a'],
+      exclude: ['mod', 'app'],
       recursive: true
     });
-    checkProp(res, ['mod1', 'mod.b']);
+    checkProp(res, ['mod1.c']);
   });
 
   it('base specified', () => {
@@ -50,7 +54,8 @@ describe('indexify', () => {
 
   it('recursive', () => {
     const res = indexify({
-      recursive: true
+      recursive: true,
+      include: ['mod', 'mod1']
     });
     checkProp(res, [
       'mod.a',
@@ -60,9 +65,10 @@ describe('indexify', () => {
   });
 
   it('merge', () => {
-    const res = indexify({
+    let res = indexify({
       recursive: true,
-      merge: true
+      merge: true,
+      exclude: ['app']
     });
     checkProp(res, [
       'a',

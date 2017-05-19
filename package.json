@@ -30,6 +30,8 @@
     "mocha": "^3.3.0"
   },
   "dependencies": {
-    "callsite": "^1.0.0"
+    "callsite": "^1.0.0",
+    "glob": "^7.1.1",
+    "lodash": "^4.17.4"
   }
 }

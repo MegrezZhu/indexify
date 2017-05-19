@@ -1,21 +1,41 @@
 const path = require('path');
 const stack = require('callsite');
 const fs = require('fs');
+const assert = require('assert');
+const glob = require('glob');
+const _ = require('lodash');
 
 function indexify (config) {
   const callerPath = path.resolve(stack()[2].getFileName());
   const source = path.resolve(callerPath, '..', config.base);
   config.source = source;
   config.callerPath = callerPath;
+  config.tree = {};
   if (config.include) {
-    config.includeSet = new Set(config.include.map(normalizePath.bind(null, source)));
+    config.include.forEach(pattern => {
+      assert(pattern.indexOf('/'), 'only the includ/exclude of 1st-level subdiretory/file is supported.');
+      if (!pattern.match(/\.(?:js|json)$/)) {
+        pattern += '/**/*.+(json|js)';
+      }
+      glob.sync(pattern, {cwd: source})
+        .forEach(filepath => {
+          _.set(config.tree, filepath.split('/'), 1);
+        });
+    });
+  } else {
+    glob.sync('**/+(*.js|*.json)', {cwd: source})
+      .forEach(filepath => {
+        _.set(config.tree, filepath.split('/'), 1);
+      });
   }
-  config.excludeSet = new Set(config.exclude.map(normalizePath.bind(null, source)));
-  if (config.selfExclude) {
-    config.excludeSet.add(callerPath);
+  if (config.exclude) {
+    config.exclude.forEach(pattern => {
+      assert(pattern.indexOf('/'), 'only the includ/exclude of 1st-level subdiretory/file is supported.');
+      _.unset(config.tree, pattern);
+    });
   }
 
-  const res = analyze(source, config);
+  const res = analyze(source, config.tree, config);
   if (!config.merge) {
     return res;
   } else {
@@ -27,68 +47,30 @@ function indexify (config) {
   }
 }
 
-function normalizePath (source, filepath) {
-  const resolved = path.resolve(source, filepath);
-  if (!resolved.match(/\..+$'/)) {
-    return resolved + '.js';
-  } else {
-    return resolved;
-  }
-}
-
-function analyze (source, config) {
+function analyze (source, tree, config) {
   const res = {};
-  let files = fs.readdirSync(source);
-  files
-    .map(filepath => path.join(source, filepath))
-    .forEach(filepath => {
-      const checkRes = canRequire(filepath);
-      if (checkRes.canRequire) {
-        if ((!config.includeSet || config.includeSet.has(filepath)) && !config.excludeSet.has(filepath)) {
-          res[path.basename(filepath).replace(/\.(?:js|json)$/, '')] = require(filepath);
-        }
-      } else {
-        if (!checkRes.isFile && config.recursive) {
-          res[path.basename(filepath)] = analyze(filepath, config);
-        }
-      }
-    });
 
-  return res;
-}
-
-function canRequire (filepath) {
-  const basename = path.basename(filepath);
-  if (basename.match(/\.(?:js|json)$/)) {
-    return {
-      isFile: true,
-      canRequire: true
-    };
-  } else {
-    const stat = fs.statSync(filepath);
-    if (stat.isDirectory()) {
-      try {
-        const stat = fs.statSync(path.join(filepath, 'index.js'));
-        if (stat.isFile()) {
-          return {
-            isFile: true,
-            canRequire: true
-          };
-        }
-      } catch (err) {
-        // no such file: index.js
-        return {
-          isFile: false,
-          canRequire: false
-        };
-      }
+  for (const [key, value] of Object.entries(tree)) {
+    if (value === 1) {
+      // file
+      const _path = path.resolve(source, key);
+      if (config.selfExclude && _path === config.callerPath) continue;
+      res[key.replace(/\..+$/, '')] = require(_path);
     } else {
-      return {
-        isFile: true,
-        canRequire: false
-      };
+      // folder
+      if (value['index.js'] === 1) {
+        const _path = path.resolve(source, key, 'index.js');
+        if (config.selfExclude && _path === config.callerPath) continue;
+        res[key] = require(path.resolve(_path));
+      } else {
+        if (config.recursive) {
+          res[key] = analyze(path.resolve(source, key), value, config);
+        }
+      }
     }
   }
+
+  return res;
 }
 
 module.exports = indexify;

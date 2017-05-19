@@ -71,7 +71,7 @@ module.exports = indexify({
     'util'
   ],
   exclude: [ 
-    'controller/controllerA.js'
+    'controller/controllerA.js' // extname needed to indicate a file rather than a directory
   ],
   recursive: true
 });

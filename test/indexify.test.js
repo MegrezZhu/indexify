@@ -1,19 +1,13 @@
 const indexify = require('../index.js');
 const assert = require('assert');
 const _ = require('lodash');
-const path = require('path');
+const util = require('../util');
 
 function checkProp (_obj, keys) {
   const obj = _.cloneDeep(_obj);
   keys.forEach(key => {
     assert(_.hasIn(obj, key), `missing prop ${key}`);
-    _.unset(obj, key);
-    const res = key.match(/(.+)\..+$/);
-    if (res) {
-      if (Object.keys(_.get(obj, res[1])).length === 0) {
-        _.unset(obj, res[1]);
-      }
-    }
+    util.unsetProp(obj, key instanceof Array ? key : key.split('.'));
   });
 
   for (const key of Object.keys(obj)) {
@@ -27,6 +21,7 @@ describe('indexify', () => {
     checkProp(res, [
       'app',
       'mod1',
+      ['util.test']
     ]);
   });
 
@@ -40,7 +35,7 @@ describe('indexify', () => {
 
   it('exclude', () => {
     const res = indexify({
-      exclude: ['mod', 'app'],
+      exclude: ['mod', 'app', 'util.test.js'],
       recursive: true
     });
     checkProp(res, ['mod1.c']);
@@ -56,12 +51,13 @@ describe('indexify', () => {
   it('recursive', () => {
     const res = indexify({
       recursive: true,
-      include: ['mod', 'mod1']
+      include: ['mod', 'mod1', 'app']
     });
     checkProp(res, [
       'mod.a',
       'mod.b',
-      'mod1'
+      'mod1',
+      'app'
     ]);
   });
 
@@ -75,6 +71,26 @@ describe('indexify', () => {
       'a',
       'b',
       'c'
+    ]);
+  });
+
+  it('example in readme', () => {
+    const res = indexify({
+      base: './app',
+      include: [
+        './controller',  // relative to base dir
+        'util'
+      ],
+      exclude: [
+        'controller/controllerA.js'
+      ],
+      recursive: true
+    });
+    checkProp(res, [
+      'controller.controllerB',
+      'util.funcA',
+      'util.funcB',
+      'util.funcC'
     ]);
   });
 });

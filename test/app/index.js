@@ -10,4 +10,3 @@ module.exports = require('../../index')({
   ],
   recursive: true
 });
-console.log(module.exports);

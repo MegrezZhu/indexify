@@ -4,6 +4,7 @@ const fs = require('fs');
 const assert = require('assert');
 const glob = require('glob');
 const _ = require('lodash');
+const util = require('./util');
 
 function indexify (config) {
   const callerPath = path.resolve(stack()[2].getFileName());
@@ -13,11 +14,9 @@ function indexify (config) {
   config.tree = {};
   if (config.include) {
     config.include.forEach(pattern => {
-      assert(pattern.indexOf('/'), 'only the include/exclude of 1st-level subdiretory/file is supported.');
-      // if (config.recursive && !pattern.match(/\.(?:js|json)$/)) {
-      //   pattern += '/**/*.+(json|js)';
-      // }
-      if (!pattern.match(/\.(?:js|json)$/)) {
+      // assert(pattern.indexOf('/') === -1, 'only the include/exclude of 1st-level subdiretory/file is supported.');
+      pattern = pattern.replace(/^\.\//, '');
+      if (!pattern.match(/\.\w+$/)) {
         pattern += '/**/*.+(json|js)';
       }
       glob.sync(pattern, {cwd: source})
@@ -34,8 +33,9 @@ function indexify (config) {
   if (config.exclude) {
     // TO-DO 指定排除a/b/c.js
     config.exclude.forEach(pattern => {
-      assert(pattern.indexOf('/'), 'only the include/exclude of 1st-level subdiretory/file is supported.');
-      _.unset(config.tree, pattern);
+      // assert(pattern.indexOf('/'), 'only the include/exclude of 1st-level subdiretory/file is supported.');
+      // _.unset(config.tree, pattern);
+      util.unsetProp(config.tree, pattern.split('/'));
     });
   }
 
@@ -59,7 +59,7 @@ function analyze (source, tree, config) {
       // file
       const _path = path.resolve(source, key);
       if (config.selfExclude && _path === config.callerPath) continue;
-      res[key.replace(/\..+$/, '')] = require(_path);
+      res[key.replace(/\.\w+?$/, '')] = require(_path);
     } else {
       // folder
       if (value['index.js'] === 1) {
